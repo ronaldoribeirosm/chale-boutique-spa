@@ -14,10 +14,7 @@ export const site = {
   bookingRating: 9.4,
   bookingUrl: "https://www.booking.com/",
   // Sistema de reservas oficial (Desbravador) — onde a reserva é de fato
-  // finalizada (preço real, disponibilidade real, pagamento). Não há parâmetro
-  // de URL documentado para pré-preencher check-in/check-out nessa página, então
-  // o link abre a busca em branco e a data selecionada aqui vai só na mensagem
-  // do WhatsApp como referência.
+  // finalizada (preço real, disponibilidade real, pagamento).
   desbravadorUrl: "https://reservas.desbravador.com.br/hotel-app/chale-boutique",
   // Placeholder — substituir pelo número real do anfitrião antes de publicar.
   whatsapp: "5512999999999",
@@ -43,4 +40,29 @@ export function whatsappMessageForDates(checkIn: Date, checkOut: Date) {
   return `Olá! Vi o ${site.name} no site e queria saber sobre disponibilidade de ${formatDateBR(
     checkIn,
   )} a ${formatDateBR(checkOut)}.`;
+}
+
+function formatDateISO(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Formato de URL observado no fluxo real do site da Desbravador (seleção de
+// datas na home → página de acomodações e tarifas). Leva check-in/check-out
+// prontos; o hóspede ainda precisa completar o reCAPTCHA deles pra ver os
+// quartos — isso não dá pra pular, e não tentamos.
+export function desbravadorReservationUrl(checkIn: Date, checkOut: Date, adults = 2) {
+  const params = new URLSearchParams({
+    checkin: formatDateISO(checkIn),
+    checkout: formatDateISO(checkOut),
+    adults: String(adults),
+    child1: "0",
+    child2: "0",
+    child3: "0",
+    voucher: "",
+    resident: "0",
+  });
+  return `${site.desbravadorUrl}/reservation?${params.toString()}`;
 }

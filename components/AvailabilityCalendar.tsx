@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Reveal from "@/components/Reveal";
-import { defaultWhatsappMessage, site, whatsappLink, whatsappMessageForDates } from "@/content/site";
+import {
+  defaultWhatsappMessage,
+  desbravadorReservationUrl,
+  site,
+  whatsappLink,
+  whatsappMessageForDates,
+} from "@/content/site";
 import { formatBRL, getMonthAvailability, type DayAvailability } from "@/lib/availability";
 
 const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
@@ -119,6 +125,8 @@ export default function AvailabilityCalendar() {
   }, [checkIn, checkOut]);
 
   const whatsapp = checkIn && checkOut ? whatsappMessageForDates(checkIn, checkOut) : defaultWhatsappMessage;
+  const reservationUrl =
+    checkIn && checkOut ? desbravadorReservationUrl(checkIn, checkOut) : site.desbravadorUrl;
 
   return (
     <section id="disponibilidade" className="scroll-mt-24 bg-pinheiro py-20 text-nevoa sm:py-28">
@@ -159,7 +167,7 @@ export default function AvailabilityCalendar() {
             <p className="font-medium">{rangeLabel}</p>
             <div className="mt-4 flex flex-wrap items-center gap-4">
               <a
-                href={site.desbravadorUrl}
+                href={reservationUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn"
@@ -178,8 +186,9 @@ export default function AvailabilityCalendar() {
             <p className="mt-4 text-sm text-nevoa/60">
               Calendário de demonstração — a reserva de verdade (preço final,
               quartos disponíveis e pagamento) é feita no nosso sistema de
-              reservas oficial. As datas escolhidas aqui não são enviadas
-              automaticamente para lá; leve-as com você ou peça pelo WhatsApp.
+              reservas oficial. Ao clicar em &ldquo;Reservar no sistema
+              oficial&rdquo; com as datas escolhidas, elas já chegam prontas lá;
+              só falta confirmar que você não é um robô.
             </p>
           </div>
         </Reveal>
