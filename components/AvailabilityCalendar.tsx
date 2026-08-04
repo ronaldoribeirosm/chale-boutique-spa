@@ -28,6 +28,7 @@ function MonthGrid({
   today,
   checkIn,
   checkOut,
+  blockedDates,
   onSelectDay,
 }: {
   year: number;
@@ -35,9 +36,10 @@ function MonthGrid({
   today: Date;
   checkIn: Date | null;
   checkOut: Date | null;
+  blockedDates: Set<string> | null;
   onSelectDay: (day: DayAvailability) => void;
 }) {
-  const days = getMonthAvailability(year, month);
+  const days = getMonthAvailability(year, month, blockedDates);
   const leadingBlanks = days[0].date.getDay();
 
   return (
@@ -124,9 +126,18 @@ function NavButton({
   );
 }
 
-export default function AvailabilityCalendar() {
+export default function AvailabilityCalendar({
+  blockedDates = null,
+}: {
+  blockedDates?: string[] | null;
+}) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const blockedDatesSet = useMemo(
+    () => (blockedDates ? new Set(blockedDates) : null),
+    [blockedDates],
+  );
+  const isRealData = blockedDatesSet !== null;
 
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
@@ -183,8 +194,10 @@ export default function AvailabilityCalendar() {
             Veja o dia livre, sem pedir seu e-mail
           </h2>
           <p className="mt-4 max-w-xl text-nevoa/70">
-            Dias riscados já estão reservados ou já passaram. Escolha entrada
-            e saída para reservar — o preço final aparece no sistema oficial.
+            Dias riscados já estão reservados ou já passaram
+            {isRealData ? " no Airbnb, na Booking ou aqui" : ""}. Escolha
+            entrada e saída para reservar — o preço final aparece no sistema
+            oficial.
           </p>
         </Reveal>
 
@@ -207,6 +220,7 @@ export default function AvailabilityCalendar() {
                 today={today}
                 checkIn={checkIn}
                 checkOut={checkOut}
+                blockedDates={blockedDatesSet}
                 onSelectDay={handleSelectDay}
               />
               <MonthGrid
@@ -215,6 +229,7 @@ export default function AvailabilityCalendar() {
                 today={today}
                 checkIn={checkIn}
                 checkOut={checkOut}
+                blockedDates={blockedDatesSet}
                 onSelectDay={handleSelectDay}
               />
             </div>
@@ -243,11 +258,14 @@ export default function AvailabilityCalendar() {
               </a>
             </div>
             <p className="mt-4 text-sm text-nevoa/60">
-              Calendário de demonstração — a reserva de verdade (preço final,
-              quartos disponíveis e pagamento) é feita no nosso sistema de
-              reservas oficial. Ao clicar em &ldquo;Reservar no sistema
-              oficial&rdquo; com as datas escolhidas, elas já chegam prontas lá;
-              só falta confirmar que você não é um robô.
+              {isRealData
+                ? "Calendário sincronizado com Airbnb e Booking — "
+                : "Calendário de demonstração — "}
+              a reserva de verdade (preço final, quartos disponíveis e
+              pagamento) é feita no nosso sistema de reservas oficial. Ao
+              clicar em &ldquo;Reservar no sistema oficial&rdquo; com as
+              datas escolhidas, elas já chegam prontas lá; só falta confirmar
+              que você não é um robô.
             </p>
           </div>
         </Reveal>

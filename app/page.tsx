@@ -7,14 +7,17 @@ import LocationMap from "@/components/LocationMap";
 import NearbyThings from "@/components/NearbyThings";
 import FaqAccordion from "@/components/FaqAccordion";
 import SocialProof from "@/components/SocialProof";
+import { getRealBlockedDates } from "@/lib/availability";
 
-export default function Home() {
+export default async function Home() {
+  const realBlockedDates = await getRealBlockedDates();
+
   return (
     <>
       <Hero />
       <ExperienceBlock />
       <AmenityGrid />
-      <AvailabilityCalendar />
+      <AvailabilityCalendar blockedDates={realBlockedDates ? Array.from(realBlockedDates) : null} />
       <DirectPerks />
       <SocialProof />
       <LocationMap />
