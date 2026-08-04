@@ -42,7 +42,7 @@ function MonthGrid({
 
   return (
     <div className="rounded-sm border border-linha/60 bg-surface p-5 sm:p-6">
-      <p className="font-display text-lg">
+      <p className="font-display text-lg text-carvao">
         {MONTH_NAMES[month]} <span className="text-musgo">{year}</span>
       </p>
       <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs text-musgo">
