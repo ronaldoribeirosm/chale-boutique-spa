@@ -9,7 +9,7 @@ import {
   whatsappLink,
   whatsappMessageForDates,
 } from "@/content/site";
-import { formatBRL, getMonthAvailability, type DayAvailability } from "@/lib/availability";
+import { getMonthAvailability, type DayAvailability } from "@/lib/availability";
 
 const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
 const MONTH_NAMES = [
@@ -24,12 +24,14 @@ function sameDay(a: Date, b: Date) {
 function MonthGrid({
   year,
   month,
+  today,
   checkIn,
   checkOut,
   onSelectDay,
 }: {
   year: number;
   month: number;
+  today: Date;
   checkIn: Date | null;
   checkOut: Date | null;
   onSelectDay: (day: DayAvailability) => void;
@@ -52,6 +54,8 @@ function MonthGrid({
           <div key={`b-${i}`} />
         ))}
         {days.map((d) => {
+          const isPast = d.date < today;
+          const isUnavailable = d.blocked || isPast;
           const isStart = checkIn && sameDay(d.date, checkIn);
           const isEnd = checkOut && sameDay(d.date, checkOut);
           const inRange =
@@ -62,16 +66,18 @@ function MonthGrid({
             <button
               key={d.date.toISOString()}
               type="button"
-              disabled={d.blocked}
+              disabled={isUnavailable}
               onClick={() => onSelectDay(d)}
               aria-pressed={Boolean(selected)}
               aria-label={
-                d.blocked
-                  ? `${d.date.getDate()} — indisponível`
-                  : `${d.date.getDate()} — livre, ${formatBRL(d.priceCents)} a diária`
+                isPast
+                  ? `${d.date.getDate()} — data passada`
+                  : d.blocked
+                    ? `${d.date.getDate()} — indisponível`
+                    : `${d.date.getDate()} — livre`
               }
               className={`flex aspect-square flex-col items-center justify-center rounded-sm text-[11px] transition-colors ${
-                d.blocked
+                isUnavailable
                   ? "cursor-not-allowed bg-linha/25 text-musgo/70"
                   : selected
                     ? "bg-cobre-claro text-carvao"
@@ -80,12 +86,9 @@ function MonthGrid({
                       : "bg-nevoa text-carvao hover:bg-cobre-claro/20"
               }`}
             >
-              <span className={d.blocked ? "line-through decoration-musgo/60" : "font-medium"}>
+              <span className={isUnavailable ? "line-through decoration-musgo/60" : "font-medium"}>
                 {d.date.getDate()}
               </span>
-              {!d.blocked && (
-                <span className="text-cobre-fundo">{Math.round(d.priceCents / 1000) / 10}k</span>
-              )}
             </button>
           );
         })}
@@ -96,13 +99,14 @@ function MonthGrid({
 
 export default function AvailabilityCalendar() {
   const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
 
   function handleSelectDay(day: DayAvailability) {
-    if (day.blocked) return;
+    if (day.blocked || day.date < today) return;
 
     if (!checkIn || (checkIn && checkOut)) {
       setCheckIn(day.date);
@@ -132,14 +136,13 @@ export default function AvailabilityCalendar() {
     <section id="disponibilidade" className="scroll-mt-24 bg-pinheiro py-20 text-nevoa sm:py-28">
       <div className="mx-auto max-w-(--container-content) px-6 sm:px-10">
         <Reveal>
-          <p className="eyebrow !text-cobre-claro">Disponibilidade e preço</p>
+          <p className="eyebrow !text-cobre-claro">Disponibilidade</p>
           <h2 className="mt-3 max-w-xl text-[clamp(1.75rem,4vw,2.5rem)]">
-            Veja o dia livre e o preço, sem pedir seu e-mail
+            Veja o dia livre, sem pedir seu e-mail
           </h2>
           <p className="mt-4 max-w-xl text-nevoa/70">
-            Dias riscados já estão reservados. O preço muda por temporada e fim
-            de semana — igual mostra a Booking, só que aqui sem comissão.
-            Escolha entrada e saída para reservar.
+            Dias riscados já estão reservados ou já passaram. Escolha entrada
+            e saída para reservar — o preço final aparece no sistema oficial.
           </p>
         </Reveal>
 
@@ -148,6 +151,7 @@ export default function AvailabilityCalendar() {
             <MonthGrid
               year={now.getFullYear()}
               month={now.getMonth()}
+              today={today}
               checkIn={checkIn}
               checkOut={checkOut}
               onSelectDay={handleSelectDay}
@@ -155,6 +159,7 @@ export default function AvailabilityCalendar() {
             <MonthGrid
               year={nextMonth.getFullYear()}
               month={nextMonth.getMonth()}
+              today={today}
               checkIn={checkIn}
               checkOut={checkOut}
               onSelectDay={handleSelectDay}
