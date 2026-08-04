@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Reveal from "@/components/Reveal";
+import { IconChevronLeft, IconChevronRight } from "@/components/icons";
 import {
   defaultWhatsappMessage,
   desbravadorReservationUrl,
@@ -76,7 +77,7 @@ function MonthGrid({
                     ? `${d.date.getDate()} — indisponível`
                     : `${d.date.getDate()} — livre`
               }
-              className={`flex aspect-square flex-col items-center justify-center rounded-sm text-[11px] transition-colors ${
+              className={`flex aspect-square flex-col items-center justify-center rounded-sm text-[11px] transition-colors duration-150 active:scale-95 ${
                 isUnavailable
                   ? "cursor-not-allowed bg-linha/25 text-musgo/70"
                   : selected
@@ -97,13 +98,54 @@ function MonthGrid({
   );
 }
 
+function NavButton({
+  direction,
+  disabled,
+  onClick,
+}: {
+  direction: "prev" | "next";
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={direction === "prev" ? "Mês anterior" : "Próximo mês"}
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors duration-150 active:scale-95 ${
+        disabled
+          ? "cursor-not-allowed border-nevoa/10 text-nevoa/25"
+          : "border-nevoa/30 text-nevoa hover:border-cobre-claro hover:text-cobre-claro"
+      }`}
+    >
+      {direction === "prev" ? <IconChevronLeft className="h-5 w-5" /> : <IconChevronRight className="h-5 w-5" />}
+    </button>
+  );
+}
+
 export default function AvailabilityCalendar() {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
+  const [monthOffset, setMonthOffset] = useState(0);
+  const [navDirection, setNavDirection] = useState<"next" | "prev">("next");
+
+  const firstMonth = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+  const secondMonth = new Date(now.getFullYear(), now.getMonth() + monthOffset + 1, 1);
+
+  function goToPrevMonth() {
+    if (monthOffset === 0) return;
+    setNavDirection("prev");
+    setMonthOffset((m) => Math.max(0, m - 1));
+  }
+
+  function goToNextMonth() {
+    setNavDirection("next");
+    setMonthOffset((m) => m + 1);
+  }
 
   function handleSelectDay(day: DayAvailability) {
     if (day.blocked || day.date < today) return;
@@ -147,23 +189,35 @@ export default function AvailabilityCalendar() {
         </Reveal>
 
         <Reveal group>
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
-            <MonthGrid
-              year={now.getFullYear()}
-              month={now.getMonth()}
-              today={today}
-              checkIn={checkIn}
-              checkOut={checkOut}
-              onSelectDay={handleSelectDay}
-            />
-            <MonthGrid
-              year={nextMonth.getFullYear()}
-              month={nextMonth.getMonth()}
-              today={today}
-              checkIn={checkIn}
-              checkOut={checkOut}
-              onSelectDay={handleSelectDay}
-            />
+          <div className="mt-10">
+            <div className="flex items-center justify-between gap-4">
+              <NavButton direction="prev" disabled={monthOffset === 0} onClick={goToPrevMonth} />
+              <NavButton direction="next" onClick={goToNextMonth} />
+            </div>
+
+            <div
+              key={monthOffset}
+              className={`mt-4 grid gap-6 md:grid-cols-2 ${
+                navDirection === "next" ? "month-enter-next" : "month-enter-prev"
+              }`}
+            >
+              <MonthGrid
+                year={firstMonth.getFullYear()}
+                month={firstMonth.getMonth()}
+                today={today}
+                checkIn={checkIn}
+                checkOut={checkOut}
+                onSelectDay={handleSelectDay}
+              />
+              <MonthGrid
+                year={secondMonth.getFullYear()}
+                month={secondMonth.getMonth()}
+                today={today}
+                checkIn={checkIn}
+                checkOut={checkOut}
+                onSelectDay={handleSelectDay}
+              />
+            </div>
           </div>
         </Reveal>
 
